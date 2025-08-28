@@ -1,0 +1,7 @@
+node_modules/
+ms-playwright/
+playwright-report/
+test-results/
+fb-auth.json
+insta-auth.json
+*.env
