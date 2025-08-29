@@ -32,15 +32,25 @@ app.post("/scrape", async (req, res) => {
 
   try {
     const searchUrl = `https://www.facebook.com/search/pages/?q=${encodeURIComponent(searchTerm)}%20in%20${encodeURIComponent(location)}`;
+
+    // 🆕 add a trace id so we can verify the exact row in DB / n8n runs
+    const traceId = `scrape_${Date.now()}`;
+
     const results = await scrapeFacebook(searchUrl, {
       storageStatePath: path.resolve(__dirname, "fb-auth.json"),
       headless: true,
     });
 
     // send results into n8n
-    await postJson(N8N_WEBHOOK_URL, { results, query: { searchTerm, location } });
+    await postJson(N8N_WEBHOOK_URL, {
+      traceId: `scrape_${Date.now()}`,                 // 🆕 added
+      platform,                // 🆕 added so your Switch node can match
+      results,
+      query: { searchTerm, location },
+    });
 
-    res.json({ count: results.length, results });
+    // 🆕 include traceId in response so you can search it in DB/n8n Executions
+    res.json({ count: results.length, results, traceId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "An error occurred while scraping" });
